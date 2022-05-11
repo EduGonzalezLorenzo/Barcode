@@ -1,78 +1,75 @@
 public class Barcode11 {
     String barcode;
-    int biggestBar = 2;
-    int biggestSpace = 2;
+    int biggestSyze = 2;
+    int smallestSyze = 1;
+    int margin = 0;
+
 
     Barcode11(String barcodeDraw) {
         this.barcode = getBarcode(barcodeDraw.trim());
     }
 
-    private String getBarcode(String barcodeDraw) {
-        getSizes(barcodeDraw);
-        return aplySizes(barcodeDraw.toCharArray());
+    Barcode11(String barcodeDraw, int margin) {
+        this.margin = margin;
+        this.barcode = getBarcode(barcodeDraw.trim());
     }
 
-    private String aplySizes(char[] barcodeDrawCharArray) {
-        String barcodeBits = "";
+    private String getBarcode(String barcodeDraw) {
+        if (this.margin == 0) getSizes(barcodeDraw);
+        return applySizes(barcodeDraw.toCharArray());
+    }
+
+    private String applySizes(char[] barcodeDrawCharArray) {
+        try {
+            String barcodeBits = "";
+
         char pastChar = barcodeDrawCharArray[0];
         int counter = 1;
-        int marginErrorBar = (int) ((float) this.biggestBar *0.1f);
-        int marginErrorSpace = (int) ((float) this.biggestSpace * 0.1f);
-        //recorrer barcodeDraw, asignar 1 cuando longitud es igual que biggest y 0 cuando no.
+
+        //recorrer barcodeDraw, asignar 1 cuando longitud es igual que biggest y 0 cuando a smallest.
         for (int i = 1; i < barcodeDrawCharArray.length; i++) {
             char actualChar = barcodeDrawCharArray[i];
             if (actualChar == pastChar) counter++;
             else {
-                if (barcodeBits.length() % 2 == 0) {
-                    if (counter >= (this.biggestBar-marginErrorBar))
-                        barcodeBits += "1";
-                    else barcodeBits += "0";
-                } else {
-                    if (counter >= (this.biggestSpace-marginErrorSpace))
-                        barcodeBits += "1";
-                    else barcodeBits += "0";
-                }
+                if (counter > this.margin) barcodeBits += "1";
+                else barcodeBits += "0";
                 counter = 1;
             }
             pastChar = actualChar;
         }
-        barcodeBits = lastLoop(barcodeBits, counter);
+        if (counter > this.margin) barcodeBits += "1";
+        else barcodeBits += "0";
 
         return barcodeBits;
-    }
-
-    private String lastLoop(String barcodeBits, int counter) {
-        if (barcodeBits.length() % 2 == 0) {
-            if (counter < this.biggestBar) barcodeBits += "0";
-            else barcodeBits += "1";
-        } else {
-            if (counter < this.biggestSpace) barcodeBits += "0";
-            else barcodeBits += "1";
+        }catch (ArrayIndexOutOfBoundsException e){
+            return null;
         }
-        return barcodeBits;
+
     }
 
     private void getSizes(String barcodeDraw) {
-        int tempBarSize = 1;
-        int tempSpaceSize = 1;
-        char[] barcodeDrawCharArray = barcodeDraw.toCharArray();
-        char pastChar = barcodeDrawCharArray[0];
+        try {
+            int tempSize = 1;
+            char[] barcodeDrawCharArray = barcodeDraw.toCharArray();
+            char pastChar = barcodeDrawCharArray[0];
 
-        for (int i = 1; i < barcodeDrawCharArray.length; i++) {
-            char actualChar = barcodeDrawCharArray[i];
-            if (pastChar == actualChar) {
-                if (pastChar == '█') tempBarSize++;
-                if (pastChar == ' ') tempSpaceSize++;
-            } else {
-                if (tempBarSize > this.biggestBar) this.biggestBar = tempBarSize;
-                if (tempSpaceSize > this.biggestSpace) this.biggestSpace = tempSpaceSize;
-                tempBarSize = 1;
-                tempSpaceSize = 1;
+            for (int i = 1; i < barcodeDrawCharArray.length; i++) {
+                char actualChar = barcodeDrawCharArray[i];
+                if (pastChar == actualChar) tempSize++;
+                else {
+                    if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
+                    else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
+                    tempSize = 1;
+                }
+                if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
+                else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
+                pastChar = actualChar;
             }
-            if (tempBarSize > this.biggestBar) this.biggestBar = tempBarSize;
-            if (tempSpaceSize > this.biggestSpace) this.biggestSpace = tempSpaceSize;
-            pastChar = actualChar;
+            this.margin = (this.biggestSyze + this.smallestSyze) / 2;
+        }catch (ArrayIndexOutOfBoundsException a){
+
         }
+
     }
 
 }
