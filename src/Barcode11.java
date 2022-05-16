@@ -1,7 +1,7 @@
 public class Barcode11 {
     String barcode;
-    int biggestSyze;
-    int smallestSyze;
+    int biggestSyze = 2;
+    int smallestSyze = 1;
     int margin = 0;
 
 
@@ -22,7 +22,6 @@ public class Barcode11 {
     }
 
     private String applySizes(char[] barcodeDrawCharArray) {
-        //TODO si un espacio o barra(sobretodo espacio ya que puede coincidir justo con un espacio real) es más largo que la barra mayor devolver null.
         try {
             String barcodeBits = "";
 
@@ -34,8 +33,6 @@ public class Barcode11 {
                 char actualChar = barcodeDrawCharArray[i];
                 if (actualChar == pastChar) counter++;
                 else {
-                    //if (counter > this.biggestSyze * 2) return "";
-
                     if (counter > this.margin) barcodeBits += "1";
                     else barcodeBits += "0";
                     counter = 1;
@@ -67,15 +64,13 @@ public class Barcode11 {
                     else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
                     tempSize = 1;
                 }
-                if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
-                else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
                 pastChar = actualChar;
             }
+            if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
+
             this.margin = (this.biggestSyze + this.smallestSyze) / 2;
         } catch (ArrayIndexOutOfBoundsException a) {
-
         }
-
     }
 
 }

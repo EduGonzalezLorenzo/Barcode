@@ -71,9 +71,9 @@ public class Code11 {
         if (barcode11.barcode == null) return null;
         if ((barcode11.barcode.length() + 1) % 6 != 0) return null;
         String answer = getValue(splitBarcode(barcode11.barcode));
-        int limitTrys = barcode11.smallestSyze;
+        int limitTries = barcode11.smallestSyze;
 
-        while (trys > limitTrys && answer == null) {
+        while (trys > limitTries && answer == null) {
             trys--;
             answer = getValue(splitBarcode(new Barcode11(s, barcode11.smallestSyze, barcode11.biggestSyze, trys).barcode));
         }
@@ -134,24 +134,39 @@ public class Code11 {
     }
 
     private static String trySinceSuccess(int startPoint, int endPoint, int height, int width, String[] splitedString) {
-        int actualRow = 1;
-        while (actualRow < (height - 1)) {
-            //TODO En la fila 36 encuentra algo que cree que es correcto pero se ha saltado una serie de valores (el 75-) hay que conseguir que se de cuenta
-            if (actualRow == 36) {
-                System.out.println("stop");
-            }
+        int actualCicle = 1;
+        int lineLenght = width * 3;
+        int bottomEndPoint = splitedString.length;
+        int bottomStartPoint = bottomEndPoint - lineLenght;
+
+
+        while (actualCicle < height) {
             String barcode = getBarcode(splitedString, startPoint, endPoint);
             String answer = Code11.decode(barcode);
-            if (answer != null) {
-                return answer;
-            }
+            if (answer != null) return answer;
+
             StringBuilder reverseBarcode = new StringBuilder(barcode);
             barcode = String.valueOf(reverseBarcode.reverse());
             answer = Code11.decode(barcode);
             if (answer != null) return answer;
+
             startPoint = endPoint;
-            endPoint = (startPoint + (width * 3));
-            actualRow++;
+            endPoint += lineLenght;
+            actualCicle++;
+
+
+            barcode = getBarcode(splitedString, bottomStartPoint, bottomEndPoint);
+            answer = Code11.decode(barcode);
+            if (answer != null) return answer;
+
+            reverseBarcode = new StringBuilder(barcode);
+            barcode = String.valueOf(reverseBarcode.reverse());
+            answer = Code11.decode(barcode);
+            if (answer != null) return answer;
+
+            bottomEndPoint = bottomStartPoint;
+            bottomStartPoint -= lineLenght;
+            actualCicle++;
         }
         return null;
     }
