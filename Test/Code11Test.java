@@ -41,11 +41,11 @@ public class Code11Test {
         assertEquals("*0123452*", Code11.decodeImage(UtilTests.getImageAsString("code11_0123452.ppm")));
         assertEquals("*0123-4567*", Code11.decodeImage(UtilTests.getImageAsString("code11_0123-4567.ppm")));
         assertEquals("*7867865835409892-654423523452341109-564*", Code11.decodeImage(UtilTests.getImageAsString("code11_buf.ppm")));
-//        assertEquals("*6675-981-743*", Code11.decodeImage(UtilTests.getImageAsString("code11_6675-981-743.ppm")));
+        assertEquals("*6675-981-743*", Code11.decodeImage(UtilTests.getImageAsString("code11_6675-981-743.ppm")));
         assertEquals("*6675-981-743*", Code11.decodeImage(UtilTests.getImageAsString("code11_6675-981-743_bis.ppm")));
-//        assertEquals("*3576-989*", Code11.decodeImage(UtilTests.getImageAsString("code11_3576-989.ppm")));
-//        assertEquals("*446688120*", Code11.decodeImage(UtilTests.getImageAsString("code11_446688120.ppm")));
-//        assertEquals("*9854-9812*", Code11.decodeImage(UtilTests.getImageAsString("code11_9854-9812.ppm")));
+        assertEquals("*3576-989*", Code11.decodeImage(UtilTests.getImageAsString("code11_3576-989.ppm")));
+        assertEquals("*446688120*", Code11.decodeImage(UtilTests.getImageAsString("code11_446688120.ppm")));
+        assertEquals("*9854-9812*", Code11.decodeImage(UtilTests.getImageAsString("code11_9854-9812.ppm")));
     }
 
     @Test

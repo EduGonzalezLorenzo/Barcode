@@ -1,7 +1,7 @@
 public class Barcode11 {
     String barcode;
-    int biggestSyze = 2;
-    int smallestSyze = 1;
+    int biggestSyze;
+    int smallestSyze;
     int margin = 0;
 
 
@@ -9,7 +9,9 @@ public class Barcode11 {
         this.barcode = getBarcode(barcodeDraw.trim());
     }
 
-    Barcode11(String barcodeDraw, int margin) {
+    Barcode11(String barcodeDraw, int smallestSyze, int biggestSyze, int margin) {
+        this.smallestSyze = smallestSyze;
+        this.biggestSyze = biggestSyze;
         this.margin = margin;
         this.barcode = getBarcode(barcodeDraw.trim());
     }
@@ -20,28 +22,31 @@ public class Barcode11 {
     }
 
     private String applySizes(char[] barcodeDrawCharArray) {
+        //TODO si un espacio o barra(sobretodo espacio ya que puede coincidir justo con un espacio real) es más largo que la barra mayor devolver null.
         try {
             String barcodeBits = "";
 
-        char pastChar = barcodeDrawCharArray[0];
-        int counter = 1;
+            char pastChar = barcodeDrawCharArray[0];
+            int counter = 1;
 
-        //recorrer barcodeDraw, asignar 1 cuando longitud es igual que biggest y 0 cuando a smallest.
-        for (int i = 1; i < barcodeDrawCharArray.length; i++) {
-            char actualChar = barcodeDrawCharArray[i];
-            if (actualChar == pastChar) counter++;
-            else {
-                if (counter > this.margin) barcodeBits += "1";
-                else barcodeBits += "0";
-                counter = 1;
+            //recorrer barcodeDraw, asignar 1 cuando longitud mayor que el margen y 0 cuando menor.
+            for (int i = 1; i < barcodeDrawCharArray.length; i++) {
+                char actualChar = barcodeDrawCharArray[i];
+                if (actualChar == pastChar) counter++;
+                else {
+                    //if (counter > this.biggestSyze * 2) return "";
+
+                    if (counter > this.margin) barcodeBits += "1";
+                    else barcodeBits += "0";
+                    counter = 1;
+                }
+                pastChar = actualChar;
             }
-            pastChar = actualChar;
-        }
-        if (counter > this.margin) barcodeBits += "1";
-        else barcodeBits += "0";
+            if (counter > this.margin) barcodeBits += "1";
+            else barcodeBits += "0";
 
-        return barcodeBits;
-        }catch (ArrayIndexOutOfBoundsException e){
+            return barcodeBits;
+        } catch (ArrayIndexOutOfBoundsException e) {
             return null;
         }
 
@@ -55,6 +60,7 @@ public class Barcode11 {
 
             for (int i = 1; i < barcodeDrawCharArray.length; i++) {
                 char actualChar = barcodeDrawCharArray[i];
+                if (actualChar == ' ') continue;
                 if (pastChar == actualChar) tempSize++;
                 else {
                     if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
@@ -66,7 +72,7 @@ public class Barcode11 {
                 pastChar = actualChar;
             }
             this.margin = (this.biggestSyze + this.smallestSyze) / 2;
-        }catch (ArrayIndexOutOfBoundsException a){
+        } catch (ArrayIndexOutOfBoundsException a) {
 
         }
 

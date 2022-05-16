@@ -71,9 +71,11 @@ public class Code11 {
         if (barcode11.barcode == null) return null;
         if ((barcode11.barcode.length() + 1) % 6 != 0) return null;
         String answer = getValue(splitBarcode(barcode11.barcode));
-        while ((answer == null || answer.contains("null")) && trys > barcode11.smallestSyze) {
+        int limitTrys = barcode11.smallestSyze;
+
+        while (trys > limitTrys && answer == null) {
             trys--;
-            answer = getValue(splitBarcode(new Barcode11(s, trys).barcode));
+            answer = getValue(splitBarcode(new Barcode11(s, barcode11.smallestSyze, barcode11.biggestSyze, trys).barcode));
         }
         if (answer == null) return null;
         if (answer.charAt(0) != '*' || answer.charAt(answer.length() - 1) != '*') return null;
@@ -121,38 +123,58 @@ public class Code11 {
     public static String decodeImage(String str) {
         //Se separa el texto por saltos de linea para poder analizar su contenido.
         String[] splitedString = str.split("\n");
-        int startPoint = 4;
-        String[] widthAndHeight = splitedString[2].split(" ");
+        int originalStartPoint = getStartPoint(splitedString) + 2;
+        String[] widthAndHeight = splitedString[originalStartPoint - 2].split(" ");
         int width = Integer.parseInt(widthAndHeight[0]);
         int height = Integer.parseInt(widthAndHeight[1]);
-        int row = 1;
+        int originalEndPoint = originalStartPoint + (width * 3);
 
-        String barcode = getBarcode(splitedString, startPoint, widthAndHeight);
-        String answer = Code11.decode(barcode);
-
-        while (answer == null && row < height) {
-            row++;
-            startPoint = startPoint + width;
-            barcode = getBarcode(splitedString, startPoint, widthAndHeight);
-            answer = Code11.decode(barcode);
-        }
-        //Se extrae el texto en formato barcode y se convierte en un objeto barcode para analizarlo con la funcion decode.
-        return answer;
+        //Se intenta hasta conseguir un resultado valido hasta conseguirlo o que no quede más imagen por analizar
+        return trySinceSuccess(originalStartPoint, originalEndPoint, height, width, splitedString);
     }
 
-    private static String getBarcode(String[] splitedString, int startPoint, String[] widthAndHeight) {
+    private static String trySinceSuccess(int startPoint, int endPoint, int height, int width, String[] splitedString) {
+        int actualRow = 1;
+        while (actualRow < (height - 1)) {
+            //TODO En la fila 36 encuentra algo que cree que es correcto pero se ha saltado una serie de valores (el 75-) hay que conseguir que se de cuenta
+            if (actualRow == 36) {
+                System.out.println("stop");
+            }
+            String barcode = getBarcode(splitedString, startPoint, endPoint);
+            String answer = Code11.decode(barcode);
+            if (answer != null) {
+                return answer;
+            }
+            StringBuilder reverseBarcode = new StringBuilder(barcode);
+            barcode = String.valueOf(reverseBarcode.reverse());
+            answer = Code11.decode(barcode);
+            if (answer != null) return answer;
+            startPoint = endPoint;
+            endPoint = (startPoint + (width * 3));
+            actualRow++;
+        }
+        return null;
+    }
+
+    private static int getStartPoint(String[] splitedString) {
+        for (int i = 0; i < splitedString.length; i++) {
+            String[] widthAndHeightTry = splitedString[i].split(" ");
+            if (widthAndHeightTry.length == 2) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    private static String getBarcode(String[] splitedString, int startPoint, int endPoint) {
         //Se extrae y separa la información deseada del string.
-        ArrayList<Integer> analizedString = decompressStr(splitedString, startPoint, widthAndHeight);
-        int trigger = (Integer.parseInt(splitedString[3]) * 3) / 2;
-
+        ArrayList<Integer> analizedString = decompressStr(splitedString, startPoint, endPoint);
+        int trigger = Integer.parseInt(splitedString[startPoint - 1]) * 2;
         StringBuilder barcodeString = new StringBuilder();
-
-
         for (int i = 0; i < analizedString.size(); i = i + 3) {
             if (getValueGroupOfThree(i, analizedString) > trigger) barcodeString.append(" ");
             else barcodeString.append("█");
         }
-
         return barcodeString.toString();
     }
 
@@ -164,15 +186,11 @@ public class Code11 {
         return totalValue;
     }
 
-    private static ArrayList<Integer> decompressStr(String[] splitedString, int startPoint, String[] widthAndHeight) {
-        // Se obtiene el ancho y alto del texto.
-
+    private static ArrayList<Integer> decompressStr(String[] splitedString, int startPoint, int endPoint) {
         //La longitud es el ancho por 3 ya que cada fragmento de información esta compuesto por tres numeros.
-        int arrayLength = ((Integer.parseInt(widthAndHeight[0])) * 3);
         ArrayList<Integer> imageValues = new ArrayList<>();
-
         // Se suman 4 a arrayLenght para compensar que i se inicia en 4
-        for (int i = startPoint; i < arrayLength + 4; i++) {
+        for (int i = startPoint; i < endPoint; i++) {
             imageValues.add(Integer.parseInt(splitedString[i]));
         }
         return imageValues;
