@@ -1,4 +1,3 @@
-
 // Consultar taula https://en.wikipedia.org/wiki/Barcode#Linear_barcodes
 // Code11: https://en.wikipedia.org/wiki/Code_11
 
@@ -6,7 +5,6 @@
 //     https://barcode.tec-it.com/en/Code11
 //     https://www.free-barcode-generator.net/code-11/
 //     https://products.aspose.app/barcode/generate
-
 
 import java.util.*;
 
@@ -63,49 +61,65 @@ public class Code11 {
         return barCode.toString();
     }
 
+
     // Decodifica amb Code11
     static String decode(String s) {
         Barcode11 barcode11 = new Barcode11(s);
-        int trys = barcode11.biggestSyze;
         //Si el formato no es valido no es procesable.
         if (barcode11.barcode == null) return null;
         if ((barcode11.barcode.length() + 1) % 6 != 0) return null;
-        String answer = getValue(splitBarcode(barcode11.barcode));
-        int limitTries = barcode11.smallestSyze;
 
-        while (trys > limitTries && answer == null) {
-            trys--;
-            answer = getValue(splitBarcode(new Barcode11(s, barcode11.smallestSyze, barcode11.biggestSyze, trys).barcode));
+        //Se intenta decodificar el código tomando como longitud mínima para ser tomado como 1 la barra más ancha encontrada
+        //y en caso de fallar se ira bajando el limite hasta llegar al tamaño de la barra más pequeña.
+        String answer = null;
+        int limitTries = barcode11.smallestSyze;
+        int tries = barcode11.biggestSyze;
+
+        while (tries >= limitTries && answer == null) {
+            //Se decodifica un barcode con el indicador de barra pequeña y grande que hemos obtenido antes, además del
+            //modificador del margen de error que decrementará en cada ciclo.
+            Barcode11 barcodeTries = new Barcode11(s, barcode11.smallestSyze, barcode11.biggestSyze, tries);
+            answer = getValue(splitBarcode(barcodeTries.barcode));
+            tries--;
         }
-        if (answer == null) return null;
-        if (answer.charAt(0) != '*' || answer.charAt(answer.length() - 1) != '*') return null;
+
         return answer;
     }
 
     private static String splitBarcode(String barcode) {
+        //Se analiza el string caracter a caracter
         ArrayList<String> barcodeSplitedTemp = new ArrayList<>(List.of(barcode.split("")));
         StringBuilder barcodeSplited = new StringBuilder();
+
+        //Divido el string en "paquetes" de 5 caracters, ya que es lo que mide cada segmento de un codigo de barras.
         for (int i = 0; i < barcodeSplitedTemp.size(); i = i + 6) {
             for (int j = i; j < i + 5; j++) {
                 barcodeSplited.append(barcodeSplitedTemp.get(j));
             }
+            //Añado un espacio entre segmentos para separarlos
             barcodeSplited.append(" ");
         }
         return barcodeSplited.toString();
     }
 
     private static String getValue(String segmentsListToBits) {
-        //Ir cogiendo segmentos separados por espacios y añadir a string su equivalente.
+        //Ir cogiendo segmentos separados por espacios y añadir a un string su equivalente.
         StringBuilder value = new StringBuilder();
         ArrayList<String> fragmets = new ArrayList<String>(List.of(segmentsListToBits.split(" ")));
+
         for (String fragmet : fragmets) {
             value.append(getKeyByValue(fragmet));
         }
+
+        //Si el codigo no empieza y acaba por * no es valido.
         if (value.charAt(0) == '*' && value.charAt(value.length() - 1) == '*') return value.toString();
         else return null;
     }
 
     private static String getKeyByValue(String fragmet) {
+        //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
+        //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
+        //respuestas y este método no serviría.
         String result = null;
         //Si el fragmento esta en la lista de codigos
         if (codification.containsValue(fragmet)) {
@@ -119,96 +133,57 @@ public class Code11 {
         return result;
     }
 
+
     // Decodifica una imatge. La imatge ha d'estar en format "ppm"
     public static String decodeImage(String str) {
         //Se separa el texto por saltos de linea para poder analizar su contenido.
-        String[] splitedString = str.split("\n");
-        int originalStartPoint = getStartPoint(splitedString) + 2;
-        String[] widthAndHeight = splitedString[originalStartPoint - 2].split(" ");
-        int width = Integer.parseInt(widthAndHeight[0]);
-        int height = Integer.parseInt(widthAndHeight[1]);
-        int originalEndPoint = originalStartPoint + (width * 3);
+        Barcode11Image b11 = new Barcode11Image(str);
+        //Se intenta decodificar la imagen con un margen de error estandar (1)
+        String answer = decodeImageLoop(b11);
 
-        //Se intenta hasta conseguir un resultado valido hasta conseguirlo o que no quede más imagen por analizar
-        return trySinceSuccess(originalStartPoint, originalEndPoint, height, width, splitedString);
-    }
-
-    private static String trySinceSuccess(int startPoint, int endPoint, int height, int width, String[] splitedString) {
-        int actualCicle = 1;
-        int lineLenght = width * 3;
-        int bottomEndPoint = splitedString.length;
-        int bottomStartPoint = bottomEndPoint - lineLenght;
-
-
-        while (actualCicle < height) {
-            String barcode = getBarcode(splitedString, startPoint, endPoint);
-            String answer = Code11.decode(barcode);
-            if (answer != null) return answer;
-
-            StringBuilder reverseBarcode = new StringBuilder(barcode);
-            barcode = String.valueOf(reverseBarcode.reverse());
-            answer = Code11.decode(barcode);
-            if (answer != null) return answer;
-
-            startPoint = endPoint;
-            endPoint += lineLenght;
-            actualCicle++;
-
-
-            barcode = getBarcode(splitedString, bottomStartPoint, bottomEndPoint);
-            answer = Code11.decode(barcode);
-            if (answer != null) return answer;
-
-            reverseBarcode = new StringBuilder(barcode);
-            barcode = String.valueOf(reverseBarcode.reverse());
-            answer = Code11.decode(barcode);
-            if (answer != null) return answer;
-
-            bottomEndPoint = bottomStartPoint;
-            bottomStartPoint -= lineLenght;
-            actualCicle++;
-        }
-        return null;
-    }
-
-    private static int getStartPoint(String[] splitedString) {
-        for (int i = 0; i < splitedString.length; i++) {
-            String[] widthAndHeightTry = splitedString[i].split(" ");
-            if (widthAndHeightTry.length == 2) {
-                return i;
+        //Si no se obtiene respueta valida se vuelve a intentar bajando de 0.1 en 0.1 el margen
+        if (answer == null) {
+            double tries = 0.9;
+            while (tries > 0.5) {
+                Barcode11Image b11Error = new Barcode11Image(str, tries);
+                answer = decodeImageLoop(b11Error);
+                if (answer!=null) return answer;
+                tries = tries - 0.1;
             }
         }
-        return 0;
+        return answer;
     }
 
-    private static String getBarcode(String[] splitedString, int startPoint, int endPoint) {
-        //Se extrae y separa la información deseada del string.
-        ArrayList<Integer> analizedString = decompressStr(splitedString, startPoint, endPoint);
-        int trigger = Integer.parseInt(splitedString[startPoint - 1]) * 2;
-        StringBuilder barcodeString = new StringBuilder();
-        for (int i = 0; i < analizedString.size(); i = i + 3) {
-            if (getValueGroupOfThree(i, analizedString) > trigger) barcodeString.append(" ");
-            else barcodeString.append("█");
+    private static String decodeImageLoop(Barcode11Image b11) {
+        String answer=null;
+        //Fila a fila se intenta decodificar la imagen
+        for (int i = 0; i < b11.image.length; i++) {
+            answer = decodeImageCicle(b11, i);
+            if (answer != null) return answer;
         }
-        return barcodeString.toString();
+        return answer;
     }
 
-    private static int getValueGroupOfThree(int i, ArrayList<Integer> analizedString) {
-        int totalValue = 0;
-        for (int j = 0; j < 3; j++) {
-            totalValue += analizedString.get(i + j);
-        }
-        return totalValue;
+    private static String decodeImageCicle(Barcode11Image b11, int i) {
+        String actualTopLine = b11.image[i];
+        String answer;
+
+        //Se prueba la primera linea de la imagen y si no funciona se prueba con la misma linea invertida por si la imagen esta al reves.
+        answer = decodeImageTry(actualTopLine);
+        if (answer != null) return answer;
+
+        //Si no funciona se repiten el proceso anteriore pero empezando por la última fila
+        String actualBottomLine = b11.image[b11.image.length - i - 1];
+        return decodeImageTry(actualBottomLine);
     }
 
-    private static ArrayList<Integer> decompressStr(String[] splitedString, int startPoint, int endPoint) {
-        //La longitud es el ancho por 3 ya que cada fragmento de información esta compuesto por tres numeros.
-        ArrayList<Integer> imageValues = new ArrayList<>();
-        // Se suman 4 a arrayLenght para compensar que i se inicia en 4
-        for (int i = startPoint; i < endPoint; i++) {
-            imageValues.add(Integer.parseInt(splitedString[i]));
-        }
-        return imageValues;
+    private static String decodeImageTry(String actualTopLine) {
+        String answer;
+        answer = Code11.decode(actualTopLine);
+
+        if (answer != null) return answer;
+
+        return Code11.decode(String.valueOf(new StringBuilder(actualTopLine).reverse()));
     }
 
     // Genera imatge a partir de codi de barres

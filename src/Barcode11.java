@@ -41,7 +41,6 @@ public class Barcode11 {
             }
             if (counter > this.margin) barcodeBits += "1";
             else barcodeBits += "0";
-
             return barcodeBits;
         } catch (ArrayIndexOutOfBoundsException e) {
             return null;
@@ -57,11 +56,12 @@ public class Barcode11 {
 
             for (int i = 1; i < barcodeDrawCharArray.length; i++) {
                 char actualChar = barcodeDrawCharArray[i];
-                if (actualChar == ' ') continue;
                 if (pastChar == actualChar) tempSize++;
                 else {
-                    if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
-                    else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
+                    if (actualChar == '█') {
+                        if (tempSize > this.biggestSyze) this.biggestSyze = tempSize;
+                        else if (tempSize < this.smallestSyze) this.smallestSyze = tempSize;
+                    }
                     tempSize = 1;
                 }
                 pastChar = actualChar;
