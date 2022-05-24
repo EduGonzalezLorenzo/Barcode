@@ -24,7 +24,6 @@ public class Barcode11 {
     private String applySizes(char[] barcodeDrawCharArray) {
         try {
             String barcodeBits = "";
-
             char pastChar = barcodeDrawCharArray[0];
             int counter = 1;
 

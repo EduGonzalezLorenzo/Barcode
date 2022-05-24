@@ -9,6 +9,9 @@
 import java.util.*;
 
 public class Code11 {
+    ///////////////////////
+    //Herramientas globales
+    ///////////////////////
     static HashMap<String, String> codification = new HashMap<>() {{
         put("0", "00001");
         put("1", "10001");
@@ -24,22 +27,40 @@ public class Code11 {
         put("*", "00110");
     }};
 
+    private static String getKeyByValue(String fragmet) {
+        //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
+        //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
+        //respuestas y este método no serviría.
+        String result = null;
+        //Si el fragmento esta en la lista de codigos
+        if (codification.containsValue(fragmet)) {
+            //Recorremos las claves hasta encontrar cual coincide con el fragmento
+            for (Map.Entry<String, String> entry : codification.entrySet()) {
+                if (Objects.equals(entry.getValue(), fragmet)) {
+                    result = entry.getKey();
+                }
+            }
+        }
+        return result;
+    }
+
+    /////////////////////////////////
     // Codifica un String amb Code11
+    /////////////////////////////////
     static String encode(String s) {
         //Divido el string en un arraylist de todos los caracters del codigo
-        ArrayList<String> characters = new ArrayList<String>(List.of(s.split("")));
-        StringBuilder resultado = new StringBuilder();
+        ArrayList<String> characters = new ArrayList<>(List.of(s.split("")));
+        StringBuilder result = new StringBuilder();
 
         //Si el primer caracter decodificado no coincide con * entonces el formato no es correcto
         if (!characters.get(0).equals("*") || !characters.get(characters.size() - 1).equals("*")) return null;
 
         for (String character : characters) {
             //Se va mirando cada segmento del codigo y se obtiene su equivalente en codigo de barras.
-            //resultado.append(getCode(character)).append(" ");
-            resultado.append(toBarcode(codification.get(character))).append(" ");
+            result.append(toBarcode(codification.get(character))).append(" ");
         }
         //Se borra el último espacio ya que sobra
-        return resultado.deleteCharAt(resultado.length() - 1).toString();
+        return result.deleteCharAt(result.length() - 1).toString();
     }
 
     private static String toBarcode(String s) {
@@ -61,8 +82,9 @@ public class Code11 {
         return barCode.toString();
     }
 
-
+    /////////////////////////
     // Decodifica amb Code11
+    /////////////////////////
     static String decode(String s) {
         Barcode11 barcode11 = new Barcode11(s);
         //Si el formato no es valido no es procesable.
@@ -75,14 +97,14 @@ public class Code11 {
         int limitTries = barcode11.smallestSyze;
         int tries = barcode11.biggestSyze;
 
-        while (tries >= limitTries && answer == null) {
+        while ((tries >= limitTries) && (answer == null || answer.contains("null"))) {
             //Se decodifica un barcode con el indicador de barra pequeña y grande que hemos obtenido antes, además del
             //modificador del margen de error que decrementará en cada ciclo.
             Barcode11 barcodeTries = new Barcode11(s, barcode11.smallestSyze, barcode11.biggestSyze, tries);
             answer = getValue(splitBarcode(barcodeTries.barcode));
             tries--;
         }
-
+        //if (answer== null || ) return null;
         return answer;
     }
 
@@ -116,25 +138,9 @@ public class Code11 {
         else return null;
     }
 
-    private static String getKeyByValue(String fragmet) {
-        //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
-        //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
-        //respuestas y este método no serviría.
-        String result = null;
-        //Si el fragmento esta en la lista de codigos
-        if (codification.containsValue(fragmet)) {
-            //Recorremos las claves hasta encontrar cual coincide con el fragmento
-            for (Map.Entry<String, String> entry : codification.entrySet()) {
-                if (Objects.equals(entry.getValue(), fragmet)) {
-                    result = entry.getKey();
-                }
-            }
-        }
-        return result;
-    }
-
-
+    ///////////////////////////////////////////////////////////////
     // Decodifica una imatge. La imatge ha d'estar en format "ppm"
+    ///////////////////////////////////////////////////////////////
     public static String decodeImage(String str) {
         //Se separa el texto por saltos de linea para poder analizar su contenido.
         Barcode11Image b11 = new Barcode11Image(str);
@@ -147,15 +153,51 @@ public class Code11 {
             while (tries > 0.5) {
                 Barcode11Image b11Error = new Barcode11Image(str, tries);
                 answer = decodeImageLoop(b11Error);
-                if (answer!=null) return answer;
+                if (answer != null) {
+                    if (answer.equals("*")) return rotatedImage(b11);
+                    return answer;
+                }
                 tries = tries - 0.1;
             }
         }
-        return answer;
+        if (answer.equals("*")) return rotatedImage(b11);
+        else return answer;
+    }
+
+    private static String rotatedImage(Barcode11Image b11) {
+        //Se toma la altura como referencia ya que se supone que las imagenes son cuadradas, por lo que base=altura
+        //Primero se prueba con cogiendo una linea que hace una diagonal de la coordenada 0,0 a la height,height
+        String rotatedLine = generateRotatedLine(b11);
+        String answer = Code11.decode(rotatedLine);
+        if (answer != null) return answer;
+
+        //Si la respuesta no es valida se prueba otra vez pero haciendo la diagonal de la cordenada height,0 a la 0,height
+        String rotatedLineInverse = generateRotatedLineInverse(b11);
+        return Code11.decode(rotatedLineInverse);
+    }
+
+    private static String generateRotatedLineInverse(Barcode11Image b11) {
+        //Diagonal de la coordenada 0,0 a la height,height
+        String rotatedLine = "";
+        int height = b11.image.length - 1;
+        for (int i = 0; i < height; i++) {
+            rotatedLine += b11.image[i].charAt(i);
+        }
+        return rotatedLine;
+    }
+
+    private static String generateRotatedLine(Barcode11Image b11) {
+        //Diagonal de la cordenada height,0 a la 0,height
+        String rotatedLine = "";
+        int height = b11.image.length - 1;
+        for (int i = 0; i < height; i++) {
+            rotatedLine += b11.image[height - i].charAt(i);
+        }
+        return rotatedLine;
     }
 
     private static String decodeImageLoop(Barcode11Image b11) {
-        String answer=null;
+        String answer = null;
         //Fila a fila se intenta decodificar la imagen
         for (int i = 0; i < b11.image.length; i++) {
             answer = decodeImageCicle(b11, i);
@@ -190,6 +232,93 @@ public class Code11 {
     // Alçada: 100px
     // Marges: vertical 4px, horizontal 8px
     public static String generateImage(String s) {
-        return "";
+        String encodedString = Code11.encode(s);
+        if (encodedString == null) return null;
+
+        String[] lineAndWidth = getLine(encodedString);
+
+        String line = lineAndWidth[0];
+        int width = Integer.parseInt(lineAndWidth[1]);
+        String verticalMargin = getVerticalMarginLines(width);
+        String barcodeImage = getBarcodeImage(line);
+
+        return  "P3\n" + width + " 108\n255\n" + verticalMargin + barcodeImage + verticalMargin.substring(0, verticalMargin.length()-1);
     }
+
+    private static String getBarcodeImage(String marginLine) {
+        String barcodeImage = "";
+        for (int i = 0; i < 100; i++) {
+            barcodeImage+=marginLine;
+        }
+        return barcodeImage;
+    }
+
+    private static String getVerticalMarginLines(int width) {
+        String verticalMargin = "";
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < width; j++) {
+                verticalMargin += "255\n255\n255\n";
+            }
+        }
+        return verticalMargin;
+    }
+
+    private static String[] getLine(String encodedString) {
+        String margin = "255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n";
+        StringBuilder line = new StringBuilder(margin);
+        char pastChar = encodedString.charAt(0);
+        int counter = 1;
+        int width = 16;
+
+        for (int i = 1; i < encodedString.length(); i++) {
+            char actualChar = encodedString.charAt(i);
+            if (actualChar == pastChar) counter++;
+            else {
+                if (pastChar == ' ') {
+                    if (counter == 1) {
+                        generatePixels(line, 3, "255");
+                        width+=3;
+                    } else {
+                        generatePixels(line, 10, "255");
+                        width+=10;
+                    }
+                } else {
+                    if (counter == 1) {
+                        generatePixels(line, 3, "0");
+                        width+=3;
+                    } else {
+                        generatePixels(line, 10, "0");
+                        width+=10;
+                    }
+                }
+                counter = 1;
+                pastChar = actualChar;
+            }
+        }
+        if (pastChar == ' ') {
+            if (counter == 1) {
+                generatePixels(line, 3, "255");
+                width+=3;
+            } else {
+                generatePixels(line, 10, "255");
+                width+=10;
+            }
+        } else {
+            if (counter == 1) {
+                generatePixels(line, 3, "0");
+                width+=3;
+            } else {
+                generatePixels(line, 10, "0");
+                width+=10;
+            }
+        }
+        return new String[]{(line + margin), "" + width};
+    }
+
+    private static void generatePixels(StringBuilder line, int lenght, String value) {
+        for (int j = 0; j < lenght; j++) {
+            line.append(value).append("\n").append(value).append("\n").append(value).append("\n");
+        }
+    }
+
 }

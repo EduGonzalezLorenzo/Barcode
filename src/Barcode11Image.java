@@ -34,7 +34,6 @@ public class Barcode11Image {
             image[i] = imageLine;
             imageLine= "";
         }
-
         return image;
     }
 
