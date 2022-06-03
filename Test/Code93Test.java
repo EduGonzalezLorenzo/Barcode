@@ -6,76 +6,118 @@ public class Code93Test {
     @Test
     public void encodeTest1() {
         assertEquals("█ █ ████ ██ █ █   ██ █ █   ██  █ ██ █ █ ████ █",
-                Code93.encode("*A*"));
+                Code93.encode("A"));
         assertEquals("█ █ ████ █ ██  █  ██  █  █ █ █ ██   █ █ ██   █  █ ██  █  ███ █ ██ ██ █  █ █ ████ █",
-                Code93.encode("*HELLO*"));
+                Code93.encode("HELLO"));
         assertEquals("█ █ ████ ██ █ █   ██ █  █  ██ ██  █ ██ █ █   ██ █   █ ██ █ █   ██  █ █  ██ █ █   ██ █  █  ██ ██  █ ██ █ █   █  █  ██ █ █   █  █ █ ████ █",
-                Code93.encode("*ABRACADABRA*"));
+                Code93.encode("ABRACADABRA"));
         assertEquals("█ █ ████ █   █ █  █ █  █   █ █   █  █ █    █ █  █ █   █  █  █  █  █   █ █ █ █    █   █  █ █    █ █ █   █ █  ██ █ █   ██ █  █  ██ █   █ ██  █ █  ██  █  █ ██   █ █ █ ██ █   █ ██  █  █ ██   █ █  ██ █  █   ██ █ █ █ ██   █ █  ██  █ █   ██ █  █ ██  █   █ ██ ██ ██ █  ██ ██  █ ██ █ ██  ██ █  ██ ██  █ ██ ██  ██ █ █ ██ ██  █ ██  ██ █  ██ ██ █  ███ █ █  █ ███ ███ █ █  ███ █  █ ███  █ █ █ ██ ███ █ ███ ██ ██ █ ███ █   █ ██ █ ███ ██ █ █ ████ █",
-                Code93.encode("*01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*"));
+                Code93.encode("01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%"));
     }
 
     @Test
     public void decodeTest1() {
-        assertEquals("*146-65-AB-59*", Code93.decode("█ █ ████ █ █  █   █  █ █   █  █   █ █  █ ███ █  █   █ █  █  █  █  █ ███ ██ █ █   ██ █  █  █  █ ███ █  █  █  █    █ █ █   ██ █ █ ██  █  █ █ ████ █"));
-        assertEquals("*ABRACADABRA*", Code93.decode("█ █ ████ ██ █ █   ██ █  █  ██ ██  █ ██ █ █   ██ █   █ ██ █ █   ██  █ █  ██ █ █   ██ █  █  ██ ██  █ ██ █ █   █  █  ██ █ █   █  █ █ ████ █"));
-        assertEquals("*A*", Code93.decode("██████       ██████      █████████████████████████      █████████████      ██████       ██████                   ████████████       ██████      ██████                   █████████████            ██████       ████████████      ███████      ██████      ██████████████████████████      ██████"));
-        assertEquals("*HELLO*", Code93.decode("█ █ ████ █ ██  █  ██  █  █ █ █ ██   █ █ ██   █  █ ██  █  ███ █ ██ ██ █  █ █ ████ █"));
-        assertEquals("*HELLO*", Code93.decode("██████       ██████      █████████████████████████      ███████      ████████████             ██████             ████████████             ██████            ███████      ██████      ███████      ████████████                   ██████       ██████      █████████████                   ██████            ███████      ████████████             ██████             ██████████████████       ██████      █████████████      ████████████       ██████            ███████      ██████      ██████████████████████████      ██████"));
-        assertEquals("*AIGUA*", Code93.decode("█████     █████     ████████████████████     ██████████     █████     █████               █████     ██████████               █████     █████     ██████████     █████               ██████████          █████     ██████████     ██████████     █████     █████               █████          █████          █████          █████               █████     █████          █████     █████     ████████████████████     █████"));
-        assertEquals("*ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*", Code93.decode("█ █ ████ ██ █ █   ██ █  █  ██ █   █ ██  █ █  ██  █  █ ██   █ █ █ ██ █   █ ██  █  █ ██   █ █  ██ █  █   ██ █ █ █ ██   █ █  ██  █ █   ██ █  █ ██  █   █ ██ ██ ██ █  ██ ██  █ ██ █ ██  ██ █  ██ ██  █ ██ ██  ██ █ █ ██ ██  █ ██  ██ █  ██ ██ █  ███ █ █  █ ███ ███ █ █  ███ █  █ ███  █ █ █ ██ ███ █ ███ ██ ██ █ ███ █   █  █ ██ █ █   █ █ ████ █"));
-        assertEquals("*01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*", Code93.decode("█ █ ████ █   █ █  █ █  █   █ █   █  █ █    █ █  █ █   █  █  █  █  █   █ █ █ █    █   █  █ █    █ █ █   █ █  ██ █ █   ██ █  █  ██ █   █ ██  █ █  ██  █  █ ██   █ █ █ ██ █   █ ██  █  █ ██   █ █  ██ █  █   ██ █ █ █ ██   █ █  ██  █ █   ██ █  █ ██  █   █ ██ ██ ██ █  ██ ██  █ ██ █ ██  ██ █  ██ ██  █ ██ ██  ██ █ █ ██ ██  █ ██  ██ █  ██ ██ █  ███ █ █  █ ███ ███ █ █  ███ █  █ ███  █ █ █ ██ ███ █ ███ ██ ██ █ ███ █   █ ██ █ ███ ██ █ █ ████ █"));
+        assertEquals("146-65-AB-59", Code93.decode("█ █ ████ █ █  █   █  █ █   █  █   █ █  █ ███ █  █   █ █  █  █  █  █ ███ ██ █ █   ██ █  █  █  █ ███ █  █  █  █    █ █ █   ██ █ █ ██  █  █ █ ████ █"));
+        assertEquals("ABRACADABRA", Code93.decode("█ █ ████ ██ █ █   ██ █  █  ██ ██  █ ██ █ █   ██ █   █ ██ █ █   ██  █ █  ██ █ █   ██ █  █  ██ ██  █ ██ █ █   █  █  ██ █ █   █  █ █ ████ █"));
+        assertEquals("A", Code93.decode("██████       ██████      █████████████████████████      █████████████      ██████       ██████                   ████████████       ██████      ██████                   █████████████            ██████       ████████████      ███████      ██████      ██████████████████████████      ██████"));
+        assertEquals("HELLO", Code93.decode("█ █ ████ █ ██  █  ██  █  █ █ █ ██   █ █ ██   █  █ ██  █  ███ █ ██ ██ █  █ █ ████ █"));
+        assertEquals("HELLO", Code93.decode("██████       ██████      █████████████████████████      ███████      ████████████             ██████             ████████████             ██████            ███████      ██████      ███████      ████████████                   ██████       ██████      █████████████                   ██████            ███████      ████████████             ██████             ██████████████████       ██████      █████████████      ████████████       ██████            ███████      ██████      ██████████████████████████      ██████"));
+        assertEquals("AIGUA", Code93.decode("█████     █████     ████████████████████     ██████████     █████     █████               █████     ██████████               █████     █████     ██████████     █████               ██████████          █████     ██████████     ██████████     █████     █████               █████          █████          █████          █████               █████     █████          █████     █████     ████████████████████     █████"));
+        assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%", Code93.decode("█ █ ████ ██ █ █   ██ █  █  ██ █   █ ██  █ █  ██  █  █ ██   █ █ █ ██ █   █ ██  █  █ ██   █ █  ██ █  █   ██ █ █ █ ██   █ █  ██  █ █   ██ █  █ ██  █   █ ██ ██ ██ █  ██ ██  █ ██ █ ██  ██ █  ██ ██  █ ██ ██  ██ █ █ ██ ██  █ ██  ██ █  ██ ██ █  ███ █ █  █ ███ ███ █ █  ███ █  █ ███  █ █ █ ██ ███ █ ███ ██ ██ █ ███ █   █  █ ██ █ █   █ █ ████ █"));
+        assertEquals("01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%", Code93.decode("█ █ ████ █   █ █  █ █  █   █ █   █  █ █    █ █  █ █   █  █  █  █  █   █ █ █ █    █   █  █ █    █ █ █   █ █  ██ █ █   ██ █  █  ██ █   █ ██  █ █  ██  █  █ ██   █ █ █ ██ █   █ ██  █  █ ██   █ █  ██ █  █   ██ █ █ █ ██   █ █  ██  █ █   ██ █  █ ██  █   █ ██ ██ ██ █  ██ ██  █ ██ █ ██  ██ █  ██ ██  █ ██ ██  ██ █ █ ██ ██  █ ██  ██ █  ██ ██ █  ███ █ █  █ ███ ███ █ █  ███ █  █ ███  █ █ █ ██ ███ █ ███ ██ ██ █ ███ █   █ ██ █ ███ ██ █ █ ████ █"));
+    }
+
+    @Test
+    public void invalid() {
+        // Bad checksum
+        assertNull(Code93.decode("█ █ ████ █ ██  █  ██  █  █ █ █ ██   █ █ ██   █  █ ██  █ ██ ██  █  █ ██  ██ ██  █ █ █ ██   ██  █ █  █  ██ █  █ █ ████ █"));
+        // Bad checksum
+        assertNull(Code93.decode("█ █ ████ █ ██  █  ██  █  █ █ █ ██   █ █ ██   █  █ ██  █ ██ ██  █  █ ██  ██ ██  █ █ █ ██   ██  █ █  █ █ █    █ █ █    █ █ ████ █"));
+        // Missing final bar
+        assertNull(Code93.decode("█ █ ████ ██ █ █   ██ █ █   ██  █ ██ █ █ ████ "));
+        // Invalid characters
+        assertNull(Code93.decode("█ █ ████ █ ██  █  ██  █  █ █ █ ██ █ █  █ █ ██ █ █  █  █ ██  █  ███ █ ██ ██ █  █ █ ████ █"));
+    }
+
+    @Test
+    public void extended() {
+        assertEquals("█ █ ████ █  ██  █ █ ██  █  █  ██  █ ██  █  █ █  ██  █ █ █ ██   █  ██  █ █ █ ██   █  ██  █ █  █ ██  ███ █ ██ █ █ ██   ███ █  █ █  ██  █ █ ██ ██  █  ██  █ █  █ ██  █  ██  █ ██ ██  █ █  ██  █ █ █ ██   █  ██  █ ██  █ █  █  █  █  █ █ ██   █ █ ████ █",
+                Code93.encode("hello, world"));
+
+       assertEquals("My Tailor Is Rich",
+                Code93.decode("█ █ ████ █ █  ██  █  ██  █ █  ██ ██ ███ █  █ ██ █  ██ █  ██  █ ██ █ █   █  ██  █ █ ██   █ █  ██  █ █ █ ██   █  ██  █ █  █ ██  █  ██  █ ██ ██  █ ███ █  █ █ ██   █ █  ██  █ ██ █ ██  ███ █  █ ██ ██  █ █  ██  █ █ ██   █ █  ██  █ ██ █   █ █  ██  █ █ ██  █  █  █  ██ ██   █ █ █ █ ████ █"));
+
+        assertEquals("█ █ ████ ███ █ ██ █  ██ █  ██ █ █   ███ █ ██ █  ██ █  █ ██  █  ██  ██ █ █ █ ████ █",
+                Code93.encode("*A*"));
     }
 
     @Test
     public void images() {
-        assertEquals("*A*",
+        assertEquals("A",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_A.ppm")));
 
-        assertEquals("*HELLO*",
+        assertEquals("HELLO",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_HELLO.ppm")));
 
-        assertEquals("*LICEU123*",
+        assertEquals("LICEU123",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_LICEU123.ppm")));
 
-        assertEquals("*WIKIPEDIA*",
+        /*assertEquals("WIKIPEDIA",
                 Code93.decodeImage(
-                        UtilTests.getImageAsString("code93_WIKIPEDIA.ppm")));
+                        UtilTests.getImageAsString("code93_WIKIPEDIA.ppm")));*/
 
-        assertEquals("*GOODBYE*",
+       assertEquals("GOODBYE",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_GOODBYE.ppm")));
 
-        assertEquals("*ABC-123$/+ . DEFG*",
+        assertEquals("ABC-123$/+ . DEFG",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_ABC_etc.ppm")));
     }
 
     @Test
+    public void extendedImages() {
+        assertEquals("This is Fine",
+                Code93.decodeImage(
+                        UtilTests.getImageAsString("code93_fine.ppm")));
+    }
+
+    @Test
     public void rotatedImages() {
-        assertEquals("*ALPHA*",
+        assertEquals("ALPHA",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_ALPHA.ppm")));
 
-        assertEquals("*OMEGA*",
+        assertEquals("OMEGA",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_OMEGA.ppm")));
 
-        assertEquals("*DELTA*",
+        assertEquals("DELTA",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_DELTA.ppm")));
 
-        assertEquals("*CHARLIE*",
+        assertEquals("CHARLIE",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_CHARLIE.ppm")));
     }
 
     @Test
+    public void vertical() {
+        assertEquals("HELLO",
+                Code93.decodeImage(
+                        UtilTests.getImageAsString("code93_HELLO_vert.ppm")));
+
+        assertEquals("HELLO",
+                Code93.decodeImage(
+                        UtilTests.getImageAsString("code93_HELLO_vert2.ppm")));
+    }
+
+    @Test
     public void rotatedLowQuality() {
-        assertEquals("*FOXTROT*",
+        assertEquals("FOXTROT",
                 Code93.decodeImage(
                         UtilTests.getImageAsString("code93_FOXTROT_lowquality2.ppm")));
     }
@@ -84,11 +126,11 @@ public class Code93Test {
     public void generateImageTest1() throws Exception {
         String imageStr;
 
-        imageStr = Code93.generateImage("*1234*");
-        assertEquals("*1234*", Code93.decodeImage(imageStr));
+        imageStr = Code93.generateImage("1234");
+        assertEquals("1234", Code93.decodeImage(imageStr));
 
-        imageStr = Code93.generateImage("*AA-BB-CC-17890-PALMA-PARIS-MUNICH*");
-        assertEquals("*AA-BB-CC-17890-PALMA-PARIS-MUNICH*",
+        imageStr = Code93.generateImage("AA-BB-CC-17890-PALMA-PARIS-MUNICH");
+        assertEquals("AA-BB-CC-17890-PALMA-PARIS-MUNICH",
                 Code93.decodeImage(imageStr));
     }
 
@@ -97,14 +139,14 @@ public class Code93Test {
     public void generateImageTest2() throws Exception {
         assertEquals("9616570b73764754cc8613259935a407",
                 UtilTests.getHexDigest("code93_01234.ppm",
-                        Code93.generateImage("*01234*")));
+                        Code93.generateImage("01234")));
 
         assertEquals("27bf97c4b49468a2f5d4edd90236d3b0",
                 UtilTests.getHexDigest("code93_HELLO-WORLD.ppm",
-                        Code93.generateImage("*HELLO-WORLD*")));
+                        Code93.generateImage("HELLO-WORLD")));
 
         assertEquals("1bc9236c7dc02e58db9c7e1a696139a3",
                 UtilTests.getHexDigest("code93_STARWARS.ppm",
-                        Code93.generateImage("*STAR WARS 123456789*")));
+                        Code93.generateImage("STAR WARS 123456789")));
     }
 }

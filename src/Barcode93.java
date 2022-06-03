@@ -1,33 +1,50 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Barcode93 {
-    String barcode;
-    int[] BarDimensions = {1,2,3,4};
-    int[] SpaceDimensions = {1,2,3,4};
+    List<String> barcodeValues = new ArrayList<>();
+    int smallestBar = 999999999;
 
     Barcode93(String barcodeDraw) {
-        this.barcode = getBarcode(barcodeDraw.trim());
-    }
-
-    private String getBarcode(String barcodeDraw) {
         getSizes(barcodeDraw);
-        return aplySizes(barcodeDraw.toCharArray());
+        getValues(barcodeDraw.toCharArray());
     }
 
     private void getSizes(String barcodeDraw) {
+        //Se recorre el string y se van guardando los tamaños de barra más grande y más pequeño.
+        try {
+            int tempSize = 1;
+            char[] barcodeDrawCharArray = barcodeDraw.toCharArray();
+            char pastChar = barcodeDrawCharArray[0];
 
-    }
+            for (int i = 1; i < barcodeDrawCharArray.length; i++) {
+                char actualChar = barcodeDrawCharArray[i];
+                if (pastChar == actualChar) tempSize++;
+                else {
+                    if (pastChar == '█') if (tempSize < this.smallestBar) this.smallestBar = tempSize;
+                    tempSize = 1;
+                }
+                pastChar = actualChar;
+            }
+            if (pastChar == '█') if (tempSize < this.smallestBar) this.smallestBar = tempSize;
 
-    private String aplySizes(char[] barcodeDrawCharArray) {
-        return" barcodeBits";
-    }
-
-    private String lastLoop(String barcodeBits, int counter) {
-        if (barcodeBits.length() % 2 == 0) {
-            //if (counter < this.biggestBar) barcodeBits += "0";
-            //else barcodeBits += "1";
-        } else {
-            //if (counter < this.biggestSpace) barcodeBits += "0";
-            //else barcodeBits += "1";
+        } catch (ArrayIndexOutOfBoundsException a) {
         }
-        return barcodeBits;
     }
+
+    private void getValues(char[] barcodeDrawCharArray) {
+        char pastChar = barcodeDrawCharArray[0];
+        int counter = 1;
+        for (int i = 1; i < barcodeDrawCharArray.length; i++) {
+            char actualChar = barcodeDrawCharArray[i];
+            if (actualChar == pastChar) counter++;
+            else {
+                this.barcodeValues.add(String.valueOf(counter / this.smallestBar));
+                counter = 1;
+            }
+            pastChar = actualChar;
+        }
+        this.barcodeValues.add(String.valueOf(counter / this.smallestBar));
+    }
+
 }

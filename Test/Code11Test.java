@@ -63,6 +63,15 @@ public class Code11Test {
     }
 
     @Test
+    public void verticalTest() throws Exception {
+        assertEquals("*95612-7*",
+                Code11.decodeImage(UtilTests.getImageAsString("code11_95612-7.ppm")));
+
+       assertEquals("*2226-78-984376*",
+                Code11.decodeImage(UtilTests.getImageAsString("code11_2226-78-984376.ppm")));
+    }
+
+    @Test
     public void generateImageTest() throws Exception {
         assertEquals("f8ad17776135622759a91b6e7e7105ab",
                 UtilTests.getHexDigest("code11_01234.ppm",

@@ -27,22 +27,23 @@ public class Code11 {
         put("*", "00110");
     }};
 
-    private static String getKeyByValue(String fragmet) {
+    private static String getKeyByValue(String fragment) {
         //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
         //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
         //respuestas y este método no serviría.
         String result = null;
         //Si el fragmento esta en la lista de codigos
-        if (codification.containsValue(fragmet)) {
+        if (codification.containsValue(fragment)) {
             //Recorremos las claves hasta encontrar cual coincide con el fragmento
             for (Map.Entry<String, String> entry : codification.entrySet()) {
-                if (Objects.equals(entry.getValue(), fragmet)) {
+                if (Objects.equals(entry.getValue(), fragment)) {
                     result = entry.getKey();
                 }
             }
         }
         return result;
     }
+
 
     /////////////////////////////////
     // Codifica un String amb Code11
@@ -82,6 +83,7 @@ public class Code11 {
         return barCode.toString();
     }
 
+
     /////////////////////////
     // Decodifica amb Code11
     /////////////////////////
@@ -104,7 +106,6 @@ public class Code11 {
             answer = getValue(splitBarcode(barcodeTries.barcode));
             tries--;
         }
-        //if (answer== null || ) return null;
         return answer;
     }
 
@@ -138,187 +139,76 @@ public class Code11 {
         else return null;
     }
 
+
     ///////////////////////////////////////////////////////////////
     // Decodifica una imatge. La imatge ha d'estar en format "ppm"
     ///////////////////////////////////////////////////////////////
     public static String decodeImage(String str) {
         //Se separa el texto por saltos de linea para poder analizar su contenido.
-        Barcode11Image b11 = new Barcode11Image(str);
+        BarcodeImage b11 = new BarcodeImage(str);
         //Se intenta decodificar la imagen con un margen de error estandar (1)
-        String answer = decodeImageLoop(b11);
+        String answer = BarcodeImage.decodeImageLoop(b11, "code11");
 
         //Si no se obtiene respueta valida se vuelve a intentar bajando de 0.1 en 0.1 el margen
         if (answer == null) {
-            double tries = 0.9;
-            while (tries > 0.5) {
-                Barcode11Image b11Error = new Barcode11Image(str, tries);
-                answer = decodeImageLoop(b11Error);
-                if (answer != null) {
-                    if (answer.equals("*")) return rotatedImage(b11);
-                    return answer;
-                }
-                tries = tries - 0.1;
-            }
+            answer = BarcodeImage.marginErrorModifierRetryer(str, "code11");
         }
-        if (answer.equals("*")) return rotatedImage(b11);
+        if (answer == null) answer = BarcodeImage.verticalImage11(b11);
+        if (answer.equals("*")) return BarcodeImage.rotatedImage(b11);
         else return answer;
-    }
-
-    private static String rotatedImage(Barcode11Image b11) {
-        //Se toma la altura como referencia ya que se supone que las imagenes son cuadradas, por lo que base=altura
-        //Primero se prueba con cogiendo una linea que hace una diagonal de la coordenada 0,0 a la height,height
-        String rotatedLine = generateRotatedLine(b11);
-        String answer = Code11.decode(rotatedLine);
-        if (answer != null) return answer;
-
-        //Si la respuesta no es valida se prueba otra vez pero haciendo la diagonal de la cordenada height,0 a la 0,height
-        String rotatedLineInverse = generateRotatedLineInverse(b11);
-        return Code11.decode(rotatedLineInverse);
-    }
-
-    private static String generateRotatedLineInverse(Barcode11Image b11) {
-        //Diagonal de la coordenada 0,0 a la height,height
-        String rotatedLine = "";
-        int height = b11.image.length - 1;
-        for (int i = 0; i < height; i++) {
-            rotatedLine += b11.image[i].charAt(i);
-        }
-        return rotatedLine;
-    }
-
-    private static String generateRotatedLine(Barcode11Image b11) {
-        //Diagonal de la cordenada height,0 a la 0,height
-        String rotatedLine = "";
-        int height = b11.image.length - 1;
-        for (int i = 0; i < height; i++) {
-            rotatedLine += b11.image[height - i].charAt(i);
-        }
-        return rotatedLine;
-    }
-
-    private static String decodeImageLoop(Barcode11Image b11) {
-        String answer = null;
-        //Fila a fila se intenta decodificar la imagen
-        for (int i = 0; i < b11.image.length; i++) {
-            answer = decodeImageCicle(b11, i);
-            if (answer != null) return answer;
-        }
-        return answer;
-    }
-
-    private static String decodeImageCicle(Barcode11Image b11, int i) {
-        String actualTopLine = b11.image[i];
-        String answer;
-
-        //Se prueba la primera linea de la imagen y si no funciona se prueba con la misma linea invertida por si la imagen esta al reves.
-        answer = decodeImageTry(actualTopLine);
-        if (answer != null) return answer;
-
-        //Si no funciona se repiten el proceso anteriore pero empezando por la última fila
-        String actualBottomLine = b11.image[b11.image.length - i - 1];
-        return decodeImageTry(actualBottomLine);
-    }
-
-    private static String decodeImageTry(String actualTopLine) {
-        String answer;
-        answer = Code11.decode(actualTopLine);
-
-        if (answer != null) return answer;
-
-        return Code11.decode(String.valueOf(new StringBuilder(actualTopLine).reverse()));
     }
 
     // Genera imatge a partir de codi de barres
     // Alçada: 100px
     // Marges: vertical 4px, horizontal 8px
     public static String generateImage(String s) {
+        //Se obtiene el string codificado del codigo de barras
         String encodedString = Code11.encode(s);
+        //si el resultado fuera null no se puede generar imagen
         if (encodedString == null) return null;
 
+        //Se genera una linea de pixeles con su respectivo margen, además de la longitud de esta linea.
         String[] lineAndWidth = getLine(encodedString);
-
         String line = lineAndWidth[0];
         int width = Integer.parseInt(lineAndWidth[1]);
-        String verticalMargin = getVerticalMarginLines(width);
-        String barcodeImage = getBarcodeImage(line);
 
-        return  "P3\n" + width + " 108\n255\n" + verticalMargin + barcodeImage + verticalMargin.substring(0, verticalMargin.length()-1);
+        //Se calculan las lineas que formaran el margen vertical superior e inferior
+        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width,4);
+        //Se genera la imagen compuesta por 100 lineas de pixeles
+        String barcodeImage = UtilCreateImage.getBarcodeImage(line, 100);
+
+        //Se añaden las 3 lineas iniciales de información, margen superior, barcode y margen inferor y se devuelven.
+        return "P3\n" + width + " 108\n255\n" + verticalMargin + barcodeImage + verticalMargin.substring(0, verticalMargin.length() - 1);
     }
 
-    private static String getBarcodeImage(String marginLine) {
-        String barcodeImage = "";
-        for (int i = 0; i < 100; i++) {
-            barcodeImage+=marginLine;
-        }
-        return barcodeImage;
-    }
-
-    private static String getVerticalMarginLines(int width) {
-        String verticalMargin = "";
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < width; j++) {
-                verticalMargin += "255\n255\n255\n";
-            }
-        }
-        return verticalMargin;
-    }
-
-    private static String[] getLine(String encodedString) {
+    static String[] getLine(String encodedString) {
+        //Se añade margen horizontal izquierdo
         String margin = "255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n";
         StringBuilder line = new StringBuilder(margin);
+
+        //Se guarda el primer caracter y se inicia longitud en 1 y ancho de la imagen en 16 (de base se tienen en cuenta los 16 pixeles de los margenes).
         char pastChar = encodedString.charAt(0);
-        int counter = 1;
+        int longitud = 1;
         int width = 16;
 
+        //Se recorre el string barcode y se añaden los pixeles que correspondan
         for (int i = 1; i < encodedString.length(); i++) {
             char actualChar = encodedString.charAt(i);
-            if (actualChar == pastChar) counter++;
+            //si el caracter actual es como el anterior se suma uno a longitud
+            if (actualChar == pastChar) longitud++;
             else {
-                if (pastChar == ' ') {
-                    if (counter == 1) {
-                        generatePixels(line, 3, "255");
-                        width+=3;
-                    } else {
-                        generatePixels(line, 10, "255");
-                        width+=10;
-                    }
-                } else {
-                    if (counter == 1) {
-                        generatePixels(line, 3, "0");
-                        width+=3;
-                    } else {
-                        generatePixels(line, 10, "0");
-                        width+=10;
-                    }
-                }
-                counter = 1;
-                pastChar = actualChar;
+                //se añaden la cantidad y tipo de pixeles correspondientes y se reinicia longitud.
+                width += UtilCreateImage.getPixels(pastChar, longitud, line);
+                longitud = 1;
             }
+            //se guarda como caracter anterior el actual, ya que en el siguiente ciclo será asi
+            pastChar = actualChar;
         }
-        if (pastChar == ' ') {
-            if (counter == 1) {
-                generatePixels(line, 3, "255");
-                width+=3;
-            } else {
-                generatePixels(line, 10, "255");
-                width+=10;
-            }
-        } else {
-            if (counter == 1) {
-                generatePixels(line, 3, "0");
-                width+=3;
-            } else {
-                generatePixels(line, 10, "0");
-                width+=10;
-            }
-        }
-        return new String[]{(line + margin), "" + width};
-    }
+        //Se hace un último ciclo despues del for para no dejarnos el último pixel por revisar
+        width += UtilCreateImage.getPixels(pastChar, longitud, line);
 
-    private static void generatePixels(StringBuilder line, int lenght, String value) {
-        for (int j = 0; j < lenght; j++) {
-            line.append(value).append("\n").append(value).append("\n").append(value).append("\n");
-        }
+        //Se añade el margen horizontal derecho y se devuelve el resultado
+        return new String[]{(line + margin), "" + width};
     }
 
 }

@@ -52,11 +52,11 @@ public class Code93 {
         put("40", "/");
         put("41", "+");
         put("42", "%");
-        put("43", "($)");
-        put("44", "(%)");
-        put("45", "(/)");
-        put("46", "(+)");
-        put("47", "*");
+        put("43", "Φ"); // ($)
+        put("44", "Ψ"); // (%)
+        put("45", "Λ"); // (/)
+        put("46", "Ω"); // (+)
+        put("47", "!");
     }};
 
     static HashMap<String, String> characterToWidths = new HashMap<>() {{
@@ -105,23 +105,23 @@ public class Code93 {
         put("/", "112131");
         put("+", "113121");
         put("%", "211131");
-        put("($)", "121221");
-        put("(%)", "312111");
-        put("(/)", "311121");
-        put("(+)", "122211");
-        put("*", "111141");
+        put("Φ", "121221"); // ($)
+        put("Ψ", "312111"); // (%)
+        put("Λ", "311121"); // (/)
+        put("Ω", "122211"); // (+)
+        put("!", "111141");
     }};
 
-    private static String getKeyByValue(String fragmet) {
+    private static String getKeyByValueIdByCharacter(String fragment) {
         //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
         //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
         //respuestas y este método no serviría.
         String result = null;
         //Si el fragmento esta en la lista de codigos
-        if (IdToCharacter.containsValue(fragmet)) {
+        if (IdToCharacter.containsValue(fragment)) {
             //Recorremos las claves hasta encontrar cual coincide con el fragmento
             for (Map.Entry<String, String> entry : IdToCharacter.entrySet()) {
-                if (Objects.equals(entry.getValue(), fragmet)) {
+                if (Objects.equals(entry.getValue(), fragment)) {
                     result = entry.getKey();
                 }
             }
@@ -129,56 +129,80 @@ public class Code93 {
         return result;
     }
 
-    //////////////////////////
-    // Codifica emprant Code93
-    //////////////////////////
-    static String encode(String str) {
-        //Divido el string en un arraylist de todos los caracters del codigo
-        ArrayList<String> characters = new ArrayList<>(List.of(str.split("")));
-        StringBuilder result = new StringBuilder();
-
-        //Si el primer caracter decodificado no coincide con * entonces el formato no es correcto
-        if (!characters.get(0).equals("*") || !characters.get(characters.size() - 1).equals("*")) return null;
-
-        //Booleana para ignorar el primere *
-        boolean firstSSFound = false;
-
-        for (int i = 0; i < characters.size(); i++) {
-            //Se va mirando cada segmento del codigo y se obtiene su equivalente en codigo de barras.
-            if (Objects.equals(characters.get(i), "*")) {
-                //Si es el primer * se ignora
-                if (!firstSSFound) firstSSFound = true;
-                    //Si no lo es se obtiene el checksum y se añade
-                else result.append(getCheckSum(characters));
+    private static String getKeyByValueCharacterByWidths(String fragment) {
+        //Esta función se utliza para obtener de un hashmap una clave mediante su valor, cosa que podemos hacer gracias
+        //a que en este caso tanto la clave como el valor son valores únicos. De lo contrario podriamos tener varias
+        //respuestas y este método no serviría.
+        String result = null;
+        //Si el fragmento esta en la lista de codigos
+        if (characterToWidths.containsValue(fragment)) {
+            //Recorremos las claves hasta encontrar cual coincide con el fragmento
+            for (Map.Entry<String, String> entry : characterToWidths.entrySet()) {
+                if (Objects.equals(entry.getValue(), fragment)) {
+                    result = entry.getKey();
+                }
             }
-            //se procesa el caracter y se añade a la respuesta
-            result.append(toBarcode(characterToWidths.get(characters.get(i))));
         }
-        //Se añade la barra final.
-        return result.append("█").toString();
+        return result;
+    }
+
+    private static String[] analizeCharacter(List<String> characters, int i) {
+        String character = characterToWidths.get(characters.get(i));
+        if (character != null && !character.equals("*")) return new String[]{"0", character};
+        else return getSpecialChar(characters, i);
+    }
+
+    private static String[] getSpecialChar(List<String> characters, int i) {
+        //Es minuscula?
+        String lowerCase = characterToWidths.get(characters.get(i).toUpperCase(Locale.ROOT));
+        if (lowerCase != null) {
+            characters.add(i + 1, characters.get(i).toUpperCase(Locale.ROOT));
+            characters.remove(i);
+            characters.add(i, "Ω");
+            return new String[]{"1", "122211 " + lowerCase};
+        } //Es caracter especial? Cual?
+        else {
+            switch (characters.get(i)) {
+                case ",":
+                    characters.add(i + 1, "L");
+                    characters.remove(i);
+                    characters.add(i, "Λ");
+                    return new String[]{"1", "311121 " + characterToWidths.get("L")};
+                case " ":
+                    return new String[]{"0", " "};
+                case "*":
+                    characters.add(i + 1, "J");
+                    characters.remove(i);
+                    characters.add(i, "Λ");
+                    return new String[]{"1", "311121 " + characterToWidths.get("J")};
+                default:
+                    return null;
+            }
+        }
     }
 
     private static String getCheckSum(List<String> characters) {
-        //Se eleminan los * del principio y del final y se le da la vuelta a la lista para facilitar su procesamiento
-        List<String> barcodeContent = characters.subList(1, characters.size() - 1);
+        //Se eleminan los start/stop del principio y del final y se le da la vuelta a la lista para facilitar su procesamiento
+        List<String> barcodeContent = new ArrayList<>(characters.subList(1, characters.size() - 1));
+
         Collections.reverse(barcodeContent);
         //Se obtiene el checksum C, se guarda y se añade al principio de la lista
-        String c = checkSumAlgorithm(barcodeContent, 20);
-        barcodeContent.add(0, c);
+        String C = checkSumAlgorithm(barcodeContent, 20);
+        barcodeContent.add(0, C);
         //Se obtiene el checksum K y se borra el checkSum C de la la lista para no manipular el arrayList original
-        String k = checkSumAlgorithm(barcodeContent, 15);
+        String K = checkSumAlgorithm(barcodeContent, 15);
         barcodeContent.remove(0);
         //Se obtienen el barcode de ambos checksums y se devuelven.
-        c = toBarcode(characterToWidths.get(c));
-        k = toBarcode(characterToWidths.get(k));
-        return c + k;
+        C = toBarcode(characterToWidths.get(C));
+        K = toBarcode(characterToWidths.get(K));
+        return C + K;
     }
 
     private static String checkSumAlgorithm(List<String> barcodeContent, int trigger) {
         int totalValue = 0;
         for (int i = 0; i < barcodeContent.size(); i++) {
             //Se obtiene el valor númerico de la letra
-            int value = Integer.parseInt(getKeyByValue(barcodeContent.get(i)));
+            int value = (Integer.parseInt(getKeyByValueIdByCharacter(barcodeContent.get(i))));
             int position = i + 1;
             //Para el checksum C cuando la posición sea mayor que 20 se vuelve a empezar, mientras que para el K se toma
             //15 como referencia. Este valor se pasa como parametro de entrada a la función.
@@ -186,15 +210,50 @@ public class Code93 {
                 //Si la posición es mayor que el trigger se le restará el trigger hasta que sea menor que este.
                 position -= trigger;
             }
-            //Se añade al valor total el valor del caracter por su posición modulo 47
-            totalValue += (value * (position)) % 47;
+            //Se añade al valor total el valor del caracter por su posición
+            totalValue += value * position;
         }
         //Una vez tratados todos los caracteres se hace el modulo 47 del total y se obtiene el caracter asignado a ese valor.
         totalValue = totalValue % 47;
         return IdToCharacter.get("" + totalValue);
     }
 
+
+
+    //////////////////////////
+    // Codifica emprant Code93
+    //////////////////////////
+    static String encode(String str) {
+        str = "!" + str + "!";
+        //Divido el string en un arraylist de todos los caracters del codigo
+        ArrayList<String> characters = new ArrayList<>(List.of(str.split("")));
+        StringBuilder result = new StringBuilder();
+
+        //Booleana para ignorar el primer caracter start/stop
+        boolean firstSSFound = false;
+
+        for (int i = 0; i < characters.size(); i++) {
+            //Se va mirando cada segmento del codigo y se obtiene su equivalente en codigo de barras.
+            if (Objects.equals(characters.get(i), "!")) {
+                //Si es el primer start/stop se ignora
+                if (!firstSSFound) firstSSFound = true;
+                    //Si no lo es se obtiene el checksum y se añade
+                else result.append(getCheckSum(characters));
+            }
+            //se procesa el caracter y se añade a la respuesta
+            String[] character = analizeCharacter(characters, i);
+            i += Integer.parseInt(character[0]);
+            String[] chars = character[1].split(" ");
+            for (int j = 0; j < chars.length; j++) {
+                result.append(toBarcode(chars[j]));
+            }
+        }
+        //Se añade la barra final.
+        return result.append("█").toString();
+    }
+
     private static String toBarcode(String s) {
+        if (s.equals(" ")) return " ";
         //Se toman todos los bits del segmento y se convierte en codigo de barras.
         char[] bitCode = s.toCharArray();
         StringBuilder barCode = new StringBuilder();
@@ -217,25 +276,159 @@ public class Code93 {
         return barCode.toString();
     }
 
+
     ////////////////////////////
     // Decodifica emprant Code93
     ////////////////////////////
     static String decode(String str) {
-        return "";
+        Barcode93 barcode93 = new Barcode93(str.trim());
+        //Si el formato no es valido no es procesable.
+        if (barcode93.barcodeValues == null) return null;
+        if ((barcode93.barcodeValues.size() - 1) % 6 != 0) return null;
+
+        //Se obtiene el string de texto equivalente al barcode
+        String answer = getValue(splitBarcode(barcode93.barcodeValues));
+
+        //Se comprueba si el checksum es valido y, en caso de serlo, se devuelve el texto obtenido.
+        if (answer != null && checkCheckSum(answer)) return answer.substring(1, answer.length() - 3);
+        else return null;
     }
+
+    private static boolean checkCheckSum(String answer) {
+        String foundedChecksum = answer.substring(answer.length() - 3, answer.length() - 1);
+        String barcode = "!" + answer.substring(1, answer.length() - 3) + "!";
+        List<String> filteredCharacters = filterCharacters(barcode);
+        String checkSum = getCheckSum(filteredCharacters);
+        checkSum = fastDecode(checkSum);
+        return checkSum.equals(foundedChecksum);
+
+    }
+
+    private static List<String> filterCharacters(String barcode) {
+        List<String> barcodeList = new ArrayList<>(List.of(barcode.split("")));
+        List<String> filteredCharacters = new ArrayList<>();
+        for (int i = 0; i < barcodeList.size(); i++) {
+            //Se va mirando cada segmento del codigo y se obtiene su equivalente en codigo de barras.
+            //se procesa el caracter y se añade a la respuesta
+            String[] character = analizeCharacter(barcodeList, i);
+            i += Integer.parseInt(character[0]);
+            String[] chars = character[1].split(" ");
+            for (int j = 0; j < chars.length; j++) {
+                filteredCharacters.add(getKeyByValueCharacterByWidths((chars[j])));
+            }
+        }
+        return filteredCharacters;
+    }
+
+    private static String fastDecode(String checkSum) {
+        Barcode93 barcode93 = new Barcode93(checkSum);
+        return getValue(splitBarcode(barcode93.barcodeValues));
+    }
+
+    private static String splitBarcode(List<String> barcode) {
+        //Se analiza el string caracter a caracter
+        StringBuilder barcodeSplited = new StringBuilder();
+
+        //Divido el string en "paquetes" de 6 caracters, ya que es lo que mide cada segmento de un codigo de barras.
+        for (int i = 0; i < barcode.size() - 1; i = i + 6) {
+            for (int j = i; j < i + 6; j++) {
+                barcodeSplited.append(barcode.get(j));
+            }
+            //Añado un espacio entre segmentos para separarlos
+            barcodeSplited.append(" ");
+        }
+        return barcodeSplited.toString();
+    }
+
+    private static String getValue(String segmentsListToBits) {
+        //Ir cogiendo segmentos separados por espacios y añadir a un string su equivalente.
+        StringBuilder value = new StringBuilder();
+        ArrayList<String> fragmets = new ArrayList<String>(List.of(segmentsListToBits.split(" ")));
+        boolean lastWasSpecial = false;
+        String lastSpecial = "";
+
+        for (int i = 0; i < fragmets.size(); i++) {
+            String fragmet = fragmets.get(i);
+            String candidate = getKeyByValueCharacterByWidths(fragmet);
+            if (candidate == null) return null;
+            if (i > fragmets.size() - 4) value.append(candidate);
+            else {
+                if (lastWasSpecial) {
+                    if (lastSpecial.equals("Ω")) value.append(candidate.toLowerCase(Locale.ROOT));
+                    lastWasSpecial = false;
+                } else if (isSpecial(candidate)) {
+                    lastWasSpecial = true;
+                    lastSpecial = candidate;
+                } else value.append(candidate);
+            }
+        }
+        return value.toString();
+    }
+
+    private static boolean isSpecial(String candidate) {
+        return switch (candidate) {
+            case "Φ", "Ψ", "Λ", "Ω" -> true;
+            default -> false;
+        };
+    }
+
 
     //////////////////////////////////////////////////////////////
     // Decodifica una imatge. La imatge ha d'estar en format "ppm"
     //////////////////////////////////////////////////////////////
     public static String decodeImage(String str) {
-        return "";
+        BarcodeImage barcodeImage = new BarcodeImage(str);
+
+        String answer = BarcodeImage.decodeImageLoop(barcodeImage, "code93");
+
+        //Si no se obtiene respueta valida se vuelve a intentar bajando de 0.1 en 0.1 el margen
+        if (answer == null) {
+            answer = BarcodeImage.marginErrorModifierRetryer(str, "code93");
+        }
+        if (answer == null) answer = BarcodeImage.verticalImage93(barcodeImage);
+        if (answer.equals("!")) return BarcodeImage.rotatedImage(barcodeImage);
+        return answer;
     }
 
     // Genera imatge a partir de barcode code93
     // Unitat barra mínima: 3 pixels
-    // Alçada: 100px
+    // Alçada: 180px
     // Marges: vertical: 5px, horizontal: 15px
     public static String generateImage(String s) {
-        return "";
+        //Se obtiene el string codificado del codigo de barras
+        String encodedString = Code93.encode(s);
+        //si el resultado fuera null no se puede generar imagen
+        if (encodedString.equals("")) return null;
+
+        //Se genera una linea de pixeles con su respectivo margen, además de la longitud de esta linea.
+        String[] lineAndWidth = getLine(encodedString);
+        String line = lineAndWidth[0];
+        int width = Integer.parseInt(lineAndWidth[1]);
+
+        //Se calculan las lineas que formaran el margen vertical superior e inferior
+        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width,5);
+        //Se genera la imagen compuesta por 100 lineas de pixeles
+        String barcodeImage = UtilCreateImage.getBarcodeImage(line, 180);
+
+        //Se añaden las 3 lineas iniciales de información, margen superior, barcode y margen inferor y se devuelven.
+        return "P3\n" + width + " 190\n255\n" + verticalMargin + barcodeImage + verticalMargin.substring(0, verticalMargin.length() - 1);
+    }
+
+    static String[] getLine(String encodedString) {
+        //Se añade margen horizontal izquierdo
+        String margin = "255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n255\n";
+        StringBuilder line = new StringBuilder(margin);
+
+        //Se guarda el primer caracter y se inicia longitud en 1 y ancho de la imagen en 16 (de base se tienen en cuenta los 16 pixeles de los margenes).
+        int width = 30;
+        //Se recorre el string barcode y se añaden los pixeles que correspondan
+        for (int i = 0; i < encodedString.length(); i++) {
+            char actualChar = encodedString.charAt(i);
+            //se añaden la cantidad y tipo de pixeles correspondientes y se reinicia longitud.
+            width += UtilCreateImage.getPixels(actualChar, 1, line);
+            //se guarda como caracter anterior el actual, ya que en el siguiente ciclo será asi
+        }
+        //Se añade el margen horizontal derecho y se devuelve el resultado
+        return new String[]{(line + margin), "" + width};
     }
 }
