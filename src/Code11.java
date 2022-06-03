@@ -13,6 +13,7 @@ public class Code11 {
     //Herramientas globales
     ///////////////////////
     static HashMap<String, String> codification = new HashMap<>() {{
+        //HashMap con los caracteres y su representación en anchos.
         put("0", "00001");
         put("1", "10001");
         put("2", "01001");
@@ -173,7 +174,7 @@ public class Code11 {
         int width = Integer.parseInt(lineAndWidth[1]);
 
         //Se calculan las lineas que formaran el margen vertical superior e inferior
-        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width,4);
+        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width, 4);
         //Se genera la imagen compuesta por 100 lineas de pixeles
         String barcodeImage = UtilCreateImage.getBarcodeImage(line, 100);
 

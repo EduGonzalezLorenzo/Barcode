@@ -7,6 +7,7 @@ public class Code93 {
     //Herramientas globales
     ///////////////////////
     static HashMap<String, String> IdToCharacter = new HashMap<>() {{
+        //HashMap que contiene los id y sus caracteres asociados
         put("0", "0");
         put("1", "1");
         put("2", "2");
@@ -60,6 +61,7 @@ public class Code93 {
     }};
 
     static HashMap<String, String> characterToWidths = new HashMap<>() {{
+        //HashMap que contiene los caracteres y su equivalente en anchos
         put("0", "131112");
         put("1", "111213");
         put("2", "111312");
@@ -147,12 +149,15 @@ public class Code93 {
     }
 
     private static String[] analizeCharacter(List<String> characters, int i) {
+        //Se analiza el caracter recibido para ver si es un caracter estandar o un caracter que requiere de codificación
+        //especial (pertenece a Full Ascii Code 93)
         String character = characterToWidths.get(characters.get(i));
         if (character != null && !character.equals("*")) return new String[]{"0", character};
         else return getSpecialChar(characters, i);
     }
 
     private static String[] getSpecialChar(List<String> characters, int i) {
+        //Se comprueba que caracter es.
         //Es minuscula?
         String lowerCase = characterToWidths.get(characters.get(i).toUpperCase(Locale.ROOT));
         if (lowerCase != null) {
@@ -199,6 +204,7 @@ public class Code93 {
     }
 
     private static String checkSumAlgorithm(List<String> barcodeContent, int trigger) {
+        //Esta función realiza el algoritmo para obtener el checksum. Trigger indica si debe resetar posición cada 15 o cada 20.
         int totalValue = 0;
         for (int i = 0; i < barcodeContent.size(); i++) {
             //Se obtiene el valor númerico de la letra
@@ -219,11 +225,11 @@ public class Code93 {
     }
 
 
-
     //////////////////////////
     // Codifica emprant Code93
     //////////////////////////
     static String encode(String str) {
+        //Añado los caracteres de incio y fin para facilitar la manipulación de la información
         str = "!" + str + "!";
         //Divido el string en un arraylist de todos los caracters del codigo
         ArrayList<String> characters = new ArrayList<>(List.of(str.split("")));
@@ -242,8 +248,10 @@ public class Code93 {
             }
             //se procesa el caracter y se añade a la respuesta
             String[] character = analizeCharacter(characters, i);
+            //Si hay caracter especial se debera avanzar una posición más para no releer nada.
             i += Integer.parseInt(character[0]);
             String[] chars = character[1].split(" ");
+            //Si es caracter Full Ascii se añadiran los dos caracteres necesarios. Si no solo se añadira uno.
             for (int j = 0; j < chars.length; j++) {
                 result.append(toBarcode(chars[j]));
             }
@@ -295,16 +303,23 @@ public class Code93 {
     }
 
     private static boolean checkCheckSum(String answer) {
+        //Se separa el checksum encontrado en la imagen del resto del mensaje
         String foundedChecksum = answer.substring(answer.length() - 3, answer.length() - 1);
+        //Se añaden caracteres de inicio y final para poder procesar el mensaje.
         String barcode = "!" + answer.substring(1, answer.length() - 3) + "!";
+        //Se revisan todos los caracteres. Si se encuentra alguno especial se cambiara por su equivalente según Full Asci code 93.
         List<String> filteredCharacters = filterCharacters(barcode);
+        //Una vez el mensaje esta filtrado y si ha sido necesario reajustado se calcula el checksum
         String checkSum = getCheckSum(filteredCharacters);
+        //Se comprueba si el checksum extraido del mensaje y el de la imagen son el mismo para verificar que el mensaje
+        //ha sido decodificado correctamente.
         checkSum = fastDecode(checkSum);
         return checkSum.equals(foundedChecksum);
 
     }
 
     private static List<String> filterCharacters(String barcode) {
+        //Esta función busca caracteres especiales y si los encuentra los sustituye por su equivalente.
         List<String> barcodeList = new ArrayList<>(List.of(barcode.split("")));
         List<String> filteredCharacters = new ArrayList<>();
         for (int i = 0; i < barcodeList.size(); i++) {
@@ -321,6 +336,8 @@ public class Code93 {
     }
 
     private static String fastDecode(String checkSum) {
+        //Función usada para decodificar el checksum encontrado en la imagen y poder compararlo para verificar que la imangen
+        //se ha decodificado de forma correcta
         Barcode93 barcode93 = new Barcode93(checkSum);
         return getValue(splitBarcode(barcode93.barcodeValues));
     }
@@ -344,21 +361,30 @@ public class Code93 {
         //Ir cogiendo segmentos separados por espacios y añadir a un string su equivalente.
         StringBuilder value = new StringBuilder();
         ArrayList<String> fragmets = new ArrayList<String>(List.of(segmentsListToBits.split(" ")));
+
+        //Estas variables sirven para controlar los caracteres especiales
         boolean lastWasSpecial = false;
         String lastSpecial = "";
 
         for (int i = 0; i < fragmets.size(); i++) {
             String fragmet = fragmets.get(i);
             String candidate = getKeyByValueCharacterByWidths(fragmet);
+            //Si el candidato no esta en la tabla normal no es procesable
             if (candidate == null) return null;
+            //Los 3 últimos caracteres (el checksum y el stop) no seran filtrados ya que no pueden ser especiales.
             if (i > fragmets.size() - 4) value.append(candidate);
             else {
                 if (lastWasSpecial) {
+                    //Si el anterior caracter fue especial el actual se tratará en función de lo que diga el especial.
+                    //En los test solo hay casos de minusculas, los cuales se resuelven convirtiendo la letra mayuscula
+                    //obtenida del HashMap en minuscula.
                     if (lastSpecial.equals("Ω")) value.append(candidate.toLowerCase(Locale.ROOT));
                     lastWasSpecial = false;
                 } else if (isSpecial(candidate)) {
+                    //Si el caracter es especial se guarda para identificarlo y se deja activo el trigger para avisar al siguiente.
                     lastWasSpecial = true;
                     lastSpecial = candidate;
+                    //Si no es especial ni el anterior lo fue se trata con normalidad
                 } else value.append(candidate);
             }
         }
@@ -366,6 +392,7 @@ public class Code93 {
     }
 
     private static boolean isSpecial(String candidate) {
+        //se comprueba si el caracter es especial.
         return switch (candidate) {
             case "Φ", "Ψ", "Λ", "Ω" -> true;
             default -> false;
@@ -379,16 +406,19 @@ public class Code93 {
     public static String decodeImage(String str) {
         BarcodeImage barcodeImage = new BarcodeImage(str);
 
+        //Se intenta decodificar la imagen.
         String answer = BarcodeImage.decodeImageLoop(barcodeImage, "code93");
 
-        //Si no se obtiene respueta valida se vuelve a intentar bajando de 0.1 en 0.1 el margen
-        if (answer == null) {
-            answer = BarcodeImage.marginErrorModifierRetryer(str, "code93");
-        }
+        //Si no se obtiene respuesta valida se manipula el margen de error
+        if (answer == null) answer = BarcodeImage.marginErrorModifierRetryer(str, "code93");
+        //Si no se obtiene respuesta valida se trata la imagen como vertical.
         if (answer == null) answer = BarcodeImage.verticalImage93(barcodeImage);
-        if (answer.equals("!")) return BarcodeImage.rotatedImage(barcodeImage);
+        //Si no se obtiene respuesta valida se trata la imagen como rotada.
+        if (answer == null) return BarcodeImage.rotatedImage(barcodeImage);
+        //Llegado a este punto se devolverá lo que se tenga
         return answer;
     }
+
 
     // Genera imatge a partir de barcode code93
     // Unitat barra mínima: 3 pixels
@@ -406,7 +436,7 @@ public class Code93 {
         int width = Integer.parseInt(lineAndWidth[1]);
 
         //Se calculan las lineas que formaran el margen vertical superior e inferior
-        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width,5);
+        String verticalMargin = UtilCreateImage.getVerticalMarginLines(width, 5);
         //Se genera la imagen compuesta por 100 lineas de pixeles
         String barcodeImage = UtilCreateImage.getBarcodeImage(line, 180);
 

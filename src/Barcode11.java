@@ -30,7 +30,9 @@ public class Barcode11 {
             char pastChar = barcodeDrawCharArray[0];
             int counter = 1;
 
-            //recorrer barcodeDraw, asignar 1 cuando longitud mayor que el margen y 0 cuando menor.
+            //recorrer barcodeDraw, cuando el caracter actual es diferente del anterior sabemos que se cambia de barra
+            // a espacio o viceversa. Se asignar 1 cuando longitud mayor que el margen y 0 cuando menor. Si es barra o
+            // espacio se define por la posición, los pares son barras y los impares espacios.
             for (int i = 1; i < barcodeDrawCharArray.length; i++) {
                 char actualChar = barcodeDrawCharArray[i];
                 if (actualChar == pastChar) counter++;
@@ -61,16 +63,18 @@ public class Barcode11 {
                 char actualChar = barcodeDrawCharArray[i];
                 //Si el caracter actual y el anterior son iguales se sigue leyendo.
                 if (pastChar == actualChar) tempSize++;
-                //De lo contrario si es una barra se comprobará si el tamaño actual es menor o mayor que el mínimo y máximo respectivamente
+                    //De lo contrario si es una barra se comprobará si el tamaño actual es menor o mayor que el mínimo y máximo respectivamente
                 else {
                     if (actualChar == '█') {
                         trySyze(tempSize);
                     }
+                    //Se resetea el contador y se sigue leyendo
                     tempSize = 1;
                 }
                 pastChar = actualChar;
             }
             trySyze(tempSize);
+            //El margen inical es media entre la barra grande y la pequeña
             this.margin = (this.biggestSyze + this.smallestSyze) / 2;
 
         } catch (ArrayIndexOutOfBoundsException a) {
@@ -78,6 +82,7 @@ public class Barcode11 {
     }
 
     private void trySyze(int tempSyze) {
+        //Se comprueba si el tamaño es menor que el menor o mayor que el mayor y si se cumpla alguna sustituye al actual.
         if (tempSyze > this.biggestSyze) this.biggestSyze = tempSyze;
         else if (tempSyze < this.smallestSyze) this.smallestSyze = tempSyze;
     }

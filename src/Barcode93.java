@@ -17,11 +17,13 @@ public class Barcode93 {
             char[] barcodeDrawCharArray = barcodeDraw.toCharArray();
             char pastChar = barcodeDrawCharArray[0];
 
+            //se recorren los caracteres. Se va acumulando el tamaño y, si es una barra, se compreuna si el tamaño encontrado
+            //es el más pequeño. Si lo es se guarda como nuevo valor más pequeño
             for (int i = 1; i < barcodeDrawCharArray.length; i++) {
                 char actualChar = barcodeDrawCharArray[i];
                 if (pastChar == actualChar) tempSize++;
                 else {
-                    if (pastChar == '█') if (tempSize < this.smallestBar) this.smallestBar = tempSize;
+                    if (pastChar == '█' && tempSize < this.smallestBar) this.smallestBar = tempSize;
                     tempSize = 1;
                 }
                 pastChar = actualChar;
@@ -35,6 +37,9 @@ public class Barcode93 {
     private void getValues(char[] barcodeDrawCharArray) {
         char pastChar = barcodeDrawCharArray[0];
         int counter = 1;
+        //recorrer barcodeDraw, cuando el caracter actual es diferente del anterior sabemos que se cambia de barra
+        // a espacio o viceversa. Se asignar la longitud dividiendo el tamaño encontrado entre el tamaño más pequeño.
+        // Si es barra o espacio se define por la posición, los pares son barras y los impares espacios.
         for (int i = 1; i < barcodeDrawCharArray.length; i++) {
             char actualChar = barcodeDrawCharArray[i];
             if (actualChar == pastChar) counter++;

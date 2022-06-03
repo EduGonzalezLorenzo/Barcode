@@ -1,3 +1,4 @@
+//Esta clase contiene funciones usadas para facilitar la creación de imagenes tanto en el code 11 como en el code 93
 public class UtilCreateImage {
     static String getBarcodeImage(String marginLine, int nLines) {
         //Se crea un string con las 100 lineas de pixeles que conforman la imagen.

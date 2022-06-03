@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 
+//Esta clase crea objetos que contienen la información recibida como imagenes de codigos de barras. Además cuenta con una
+//serie de funciones que facilitan la manipulación de estos objetos.
 public class BarcodeImage {
     String[] image;
     double marginError = 1;
@@ -36,6 +38,7 @@ public class BarcodeImage {
         int trigger = (int) (Integer.parseInt(splitedString[startPoint]) * this.marginError);
 
         //Se genera un array de string con cada linea de pixeles que forma la imagen convertida en barras y espacios.
+        //StartLine define el punto de partida de la linea y widht cuanto mide. Cada bucle empieza por donde termino el anterior
         String imageLine = "";
         int startLine = 1;
         for (int i = 0; i < height; i++) {
@@ -64,7 +67,7 @@ public class BarcodeImage {
     }
 
     private static ArrayList<Integer> decompressStr(String[] splitedString, int startPoint) {
-        //Se crea un array con todos los valores de los pixeles de la imagen.
+        //Se crea un array y se le añaden todos los valores de los pixeles de la imagen.
         ArrayList<Integer> imageValues = new ArrayList<>();
 
         for (int i = startPoint; i < splitedString.length; i++) {
@@ -74,7 +77,7 @@ public class BarcodeImage {
     }
 
     private static int getValueGroupOfThree(int i, ArrayList<Integer> decompressedString) {
-        //se cogen los numeros de 3 en tres, ya que cada pixel esta formado por tres valroes.
+        //se cogen los numeros de 3 en tres, ya que cada pixel esta formado por tres valores.
         int totalValue = 0;
         for (int j = 0; j < 3; j++) {
             totalValue += decompressedString.get(i + j);
@@ -103,7 +106,7 @@ public class BarcodeImage {
 
     static String decodeImageLoop(BarcodeImage barcodeImage, String barcodeType) {
         String answer = null;
-        //Fila a fila se intenta decodificar la imagen
+        //Fila a fila se intenta decodificar la imagen hasta que obtiene respuesta valida o hasta que se queda sin lineas
         for (int i = 0; i < barcodeImage.image.length; i++) {
             answer = decodeImageCicle(barcodeImage, i, barcodeType);
             if (answer != null) return answer;
@@ -147,9 +150,11 @@ public class BarcodeImage {
     ////////////////////////////////////////////////////////
     //Metodos para manipular la orientación de las imagenes
     ////////////////////////////////////////////////////////
+
     //Funciones para imagenes Verticales
     static String verticalImage11(BarcodeImage barcodeImage) {
         String answer = "";
+        //Se procesa la imagen igual pero en vez de fila a fila columna a columna probando en ambas direcciones
         for (int i = 0; i < barcodeImage.image[0].length(); i++) {
             StringBuilder verticalLine = getVerticalLine(i, barcodeImage);
             answer = Code11.decode(verticalLine.toString());
@@ -162,6 +167,7 @@ public class BarcodeImage {
     }
 
     static String verticalImage93(BarcodeImage barcodeImage) {
+        //Se procesa la imagen igual pero en vez de fila a fila columna a columna probando en ambas direcciones
         String answer = null;
         for (int i = 0; i < barcodeImage.image[0].length(); i++) {
             StringBuilder verticalLine = getVerticalLine(i, barcodeImage);
@@ -175,6 +181,7 @@ public class BarcodeImage {
     }
 
     private static StringBuilder getVerticalLine(int i, BarcodeImage barcodeImage) {
+        //Se obtiene una columna de pixeles de la imagen
         StringBuilder verticalLine = new StringBuilder("");
         for (int j = 0; j < barcodeImage.image.length; j++) {
             verticalLine.append(barcodeImage.image[j].charAt(i));
